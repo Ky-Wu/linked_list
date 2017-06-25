@@ -13,6 +13,7 @@ class LinkedList
     else
       set_only_node(n)
     end
+    node_value
   end
 
   def prepend(node_value)
@@ -23,6 +24,7 @@ class LinkedList
     else
       set_only_node(n)
     end
+    node_value
   end
 
   def size
@@ -36,52 +38,42 @@ class LinkedList
   end
 
   def at(index)
-    current_node = @head
-    index.times do
-      current_node = current_node.next_node
-      break if current_node == nil
-    end
-    if current_node.nil?
-      return nil
-    else
-      current_node.value
-    end
+    node = node_at(index)
+    return node.value unless node == nil
+    nil
   end
 
   def pop
     #Store second to last element's index in the variable n
     n = size - 2
-    current_node = @head
-    n.times { current_node = current_node.next_node }
-    current_node.next_node = nil
-    @tail = current_node
+    second_to_last_node = node_at(n)
+    second_to_last_node.value = nil
+    @tail = second_to_last_node
   end
 
   def contains?(value)
-    current_node = @head
-    until current_node.nil?
-      return true if current_node.value == value
-    end
+    iterate { |node| return true if current_node.value == value }
     false
   end
 
   def find(data)
-    current_node = @head
     index = 0
-    until current_node == nil
+    iterate do |node|
       return index if current_node.value == data
-      current_node = current_node.next_node
       index += 1
     end
-    return nil
+    nil
   end
 
   def to_s
     data = []
-    current_node = @head
-    until current_node.nil?
-      data << current_node.value.to_s
-      current_node = current_node.next_node
+    iterate do |node|
+      next if node.nil?
+      if node.value.nil?
+        data << "nil"
+      else
+        data << node.value.to_s
+      end
     end
     output = ""
     data.each { |item| output << "( #{item} ) -> "}
@@ -105,7 +97,45 @@ class LinkedList
     end
   end
 
+  def insert_at(index, node_value)
+    set_only_node(Node.new) if empty?
+    current_node = @head
+    index.times do
+      current_node.next_node = Node.new if current_node.next_node.nil?
+      current_node = current_node.next_node
+    end
+    current_node.value = node_value
+  end
+
+  def remove_at(index)
+    max_index = size - 1
+    if index == 0
+      @head = @head.next_node
+      @tail = nil if max_index == 0
+    elsif index == max_index
+      second_to_last_node = node_at(index - 1)
+      second_to_last_node.next_node = nil
+      @tail = second_to_last_node
+    elsif index > 0 and index < max_index
+      previous_node = node_at(index - 1)
+      previous_node.next_node = previous_node.next_node.next_node
+    end
+  end
+
   private
+
+  def node_at(index)
+    current_node = @head
+    index.times do
+      break if current_node == nil
+      current_node = current_node.next_node
+    end
+    if current_node.nil?
+      return nil
+    else
+      current_node
+    end
+  end
 
   def empty?
     if @head.nil? and @tail.nil?
@@ -119,6 +149,15 @@ class LinkedList
     @head = n
     @tail = n
   end
+
+  def iterate
+    current_node = @head
+    until current_node == nil
+      yield(current_node)
+      current_node = current_node.next_node
+    end
+  end
+
 end
 
 class Node
@@ -128,3 +167,5 @@ class Node
     @next_node = nil
   end
 end
+
+#Refactoring is very possible here. Try using that private method that returns a node at a specific index.
